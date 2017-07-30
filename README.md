@@ -7,8 +7,8 @@ Dependencies:
 
 Installation:
 
-1- clone the following openCV library: 
-  git clone https://github.com/opencv/opencv.git
+1- clone the following openCV library: \n
+  git clone https://github.com/opencv/opencv.git \n
 2- clone this git repo:
   git clone https://github.com/ftlili/Tracker.git
 3- cd Tracker
