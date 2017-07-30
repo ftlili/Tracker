@@ -60,8 +60,8 @@ class App:
             ret, frame = self.cam.read()
             frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             vis = frame.copy()
-
             if len(self.tracks) > 0:
+                # if we're currently tracking len(self.tracks) number of corners
                 img0, img1 = self.prev_gray, frame_gray
                 p0 = np.float32([tr[-1] for tr in self.tracks]).reshape(-1, 1, 2)
                 p1, st, err = cv2.calcOpticalFlowPyrLK(img0, img1, p0, None, **lk_params)
