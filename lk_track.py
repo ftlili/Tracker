@@ -21,7 +21,7 @@ ESC - exit
 # Python 2/3 compatibility
 from __future__ import print_function
 import sys
-sys.path.append("/Users/Fatma/Desktop/ComputerVision/opencv/samples/python/")
+sys.path.append("lib/")
 import numpy as np
 import cv2
 import video
