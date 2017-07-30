@@ -1,11 +1,11 @@
-# Tracker
+## Tracker
 
-Dependencies:
+# Dependencies:
 - OpenCV 3.1 or later
 - numpy
  
 
-Installation:
+# Installation:
 
 1. clone the following openCV library:
 ```
@@ -24,7 +24,7 @@ cd Tracker
   sys.path.append("Path/To/Library/opencv/samples/python/")
 ```
 
-Run:
+# Run:
 To run the Tracker:
 ```
   python lk_track.py /Path/To/Video
