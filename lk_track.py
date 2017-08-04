@@ -77,6 +77,7 @@ class App:
         # the number of times we try to get enough random to compute the hommography
         self.tries = 5
         self.FRCNN = False
+        self.dif_thresh = 1
 
 
 
@@ -85,7 +86,7 @@ class App:
         p1, st, err = cv2.calcOpticalFlowPyrLK(img0, img1, p0, None, **lk_params)
         p0r, st, err = cv2.calcOpticalFlowPyrLK(img1, img0, p1, None, **lk_params)
         d = abs(p0-p0r).reshape(-1, 2).max(-1)
-        good = d < 1
+        good = d < self.dif_thresh
         new_tracks = []
         # tr tracked points (src pts), p1 predicted points (dest pts) good (array of whether the predicted points are good or not)
         for tr, (x, y), good_flag in zip(tracks, p1.reshape(-1, 2), good):
@@ -98,9 +99,21 @@ class App:
                 del tr[0]
             new_tracks.append(tr)
             # draw the new good predited pts
-            cv2.circle(vis, (x, y), 2, (0, 255, 0), -1)
+            cv2.circle(vis, (x, y), 2, (0, 0, 255), -1)
         return new_tracks
 
+
+    def extract_features(self, frame_gray, vis):
+        mask = np.zeros_like(frame_gray)
+        if len(self.detections) != 0:
+            for det in self.detections:
+                ((x1,y1),(x2,y2)) = det
+                cv2.rectangle(vis, (x1, y1), (x2, y2), (0,255,0))
+                mask[y1:y2, x1:x2] = 255
+
+        for x, y in [np.int32(tr[-1]) for tr in self.tracks]:
+            cv2.circle(mask, (x, y), 5, 0, -1)
+        return cv2.goodFeaturesToTrack(frame_gray, mask = mask, **feature_params)
 
 
 
@@ -196,16 +209,17 @@ class App:
         if (frame_idx == 2) or (self.FRCNN == True):
         # if (frame_idx % self.detect_box_interval) == 0:
             self.detections = detect_box(frame)
-        mask = np.zeros_like(frame_gray)
-        if len(self.detections) != 0:
-            for det in self.detections:
-                ((x1,y1),(x2,y2)) = det
-                cv2.rectangle(vis, (x1, y1), (x2, y2), (0,255,0))
-                mask[y1:y2, x1:x2] = 255
+        # mask = np.zeros_like(frame_gray)
+        # if len(self.detections) != 0:
+        #     for det in self.detections:
+        #         ((x1,y1),(x2,y2)) = det
+        #         cv2.rectangle(vis, (x1, y1), (x2, y2), (0,255,0))
+        #         mask[y1:y2, x1:x2] = 255
 
-        for x, y in [np.int32(tr[-1]) for tr in self.tracks]:
-            cv2.circle(mask, (x, y), 5, 0, -1)
-        p = cv2.goodFeaturesToTrack(frame_gray, mask = mask, **feature_params)
+        # for x, y in [np.int32(tr[-1]) for tr in self.tracks]:
+        #     cv2.circle(mask, (x, y), 5, 0, -1)
+        # p = cv2.goodFeaturesToTrack(frame_gray, mask = mask, **feature_params)
+        p = self.extract_features(frame_gray, vis)
 
         if p is not None:
             for x, y in np.float32(p).reshape(-1, 2):
