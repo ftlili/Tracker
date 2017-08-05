@@ -79,7 +79,7 @@ class App:
         # the number of times we try to get enough random to compute the hommography
         self.tries = 5
         self.FRCNN = False
-        self.dif_thresh = 1000
+        self.dif_thresh = 1
 
 
 
@@ -184,8 +184,21 @@ class App:
 
                 # for i in range(len(self.detections)):
                     print ("number of points for box", i, "is ", len(pts_per_box[i][0]))
-                    H, mask = cv2.findHomography(np.int32(pts_per_box[i][0]), 
-                        np.int32(pts_per_box[i][1]), cv2.RANSAC, 5.0)
+
+                    # BAD STYLE: TODO: FIX ME PLZ
+                    failed = False
+                    try:
+                        H, mask = cv2.findHomography(np.int32(pts_per_box[i][0]), 
+                            np.int32(pts_per_box[i][1]), cv2.RANSAC, 5.0)
+                    except:
+                        failed = True
+                    if H is None: failed = True
+                    if failed:
+                        print ('FAILED')
+                        self.FRCNN = True
+                        self.detections = []
+                        return
+
                     ((xb1, yb1), (xb2, yb2)) = self.detections[i]
                     a = np.array([[xb1, yb1], [xb2, yb2]], dtype='float32')
                     a = np.array([a])
