@@ -122,6 +122,11 @@ class App:
             kp = sift.detect(frame_gray, mask=mask)
             points = [k.pt for k in kp]
             return points
+        elif ft=='surf':
+            surf = SURF_create()
+            kp = surf.detect(frame_gray, mask=mask)
+            points = [k.pt for k in kp]
+            return points
 
 
 
@@ -196,8 +201,7 @@ class App:
                     if failed:
                         print ('FAILED')
                         self.FRCNN = True
-                        self.detections = []
-                        return
+                        continue
 
                     ((xb1, yb1), (xb2, yb2)) = self.detections[i]
                     a = np.array([[xb1, yb1], [xb2, yb2]], dtype='float32')
