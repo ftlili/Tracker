@@ -21,6 +21,7 @@ ESC - exit
 # Python 2/3 compatibility
 from __future__ import print_function
 import sys
+from sys import exit
 sys.path.append("./lib/")
 import numpy as np
 import cv2
@@ -105,7 +106,7 @@ class App:
         return new_tracks
 
 
-    def extract_features(self, frame_gray, vis, ft='gftt'):
+    def extract_features(self, frame_gray, vis, ft='ev'):
         mask = np.zeros_like(frame_gray)
         if len(self.detections) != 0:
             for det in self.detections:
@@ -115,7 +116,7 @@ class App:
 
         for x, y in [np.int32(tr[-1]) for tr in self.tracks]:
             cv2.circle(mask, (x, y), 5, 0, -1)
-        if ft=='gftt':
+        if ft=='ev':
             return cv2.goodFeaturesToTrack(frame_gray, mask = mask, **feature_params)
         elif ft=='sift':
             sift = SIFT_create()
@@ -127,6 +128,26 @@ class App:
             kp = surf.detect(frame_gray, mask=mask)
             points = [k.pt for k in kp]
             return points
+        elif ft=='harris':
+            return cv2.goodFeaturesToTrack(frame_gray, mask = mask, 
+                useHarrisDetector=True, **feature_params)
+        # CANNY DOES NOT WORK
+        elif ft=='canny':
+            pts = []
+            edge_mask = cv2.Canny(frame_gray, 100, 200)
+            print (len(edge_mask))
+            print (edge_mask[0])
+            c1 = cv2.goodFeaturesToTrack(frame_gray, mask = mask, **feature_params)
+            c2 = cv2.goodFeaturesToTrack(frame_gray, mask = edge_mask, **feature_params)
+            print (c1)
+            print (c2)
+            c = np.intersect1d(c1,c2)
+            return c
+
+
+
+
+
 
 
 
@@ -178,6 +199,7 @@ class App:
                         # extra_pts = list(map(lambda p: [p], extra_pts))
                         print ("extra_pts", extra_pts)
                         print (len(extra_pts))
+                        if len(extra_pts)==0: break
                         extra_tracks = self.compute_tracks(img0, img1, vis, extra_pts)
                         print ("extra_tracks", extra_tracks)
                         print (len(extra_tracks))
@@ -197,7 +219,7 @@ class App:
                             np.int32(pts_per_box[i][1]), cv2.RANSAC, 5.0)
                     except:
                         failed = True
-                    if H is None: failed = True
+                    if not failed and H is None: failed = True
                     if failed:
                         print ('FAILED')
                         self.FRCNN = True
@@ -235,8 +257,8 @@ class App:
         # if (frame_idx % self.detect_box_interval) == 0:
             self.detections = faster_RCNN(frame)
 
-        p = self.extract_features(frame_gray, vis, ft='sift')
-        # p = self.extract_features(frame_gray, vis, ft='gftt')
+        p = self.extract_features(frame_gray, vis, ft='circles')
+        # p = self.extract_features(frame_gray, vis, ft='ev')
 
         if p is not None:
             for x, y in np.float32(p).reshape(-1, 2):
