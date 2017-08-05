@@ -49,7 +49,7 @@ def draw_str(dst, target, s):
 
 
 
-def detect_box(img):
+def faster_RCNN(img):
     # l = []
     # while (len(l) < 2):
     #     bbox = cv2.selectROI(img, False)
@@ -229,7 +229,7 @@ class App:
         # We're at a detection frame:
         if (frame_idx == 2) or (self.FRCNN == True):
         # if (frame_idx % self.detect_box_interval) == 0:
-            self.detections = detect_box(frame)
+            self.detections = faster_RCNN(frame)
 
         p = self.extract_features(frame_gray, vis, ft='sift')
         # p = self.extract_features(frame_gray, vis, ft='gftt')
