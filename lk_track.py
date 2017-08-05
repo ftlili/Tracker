@@ -29,6 +29,8 @@ from time import clock
 from matplotlib import pyplot as plt
 import random
 
+from cv2.xfeatures2d import SIFT_create, SURF_create
+
 
 lk_params = dict( winSize  = (15, 15),
                   maxLevel = 2,
@@ -77,7 +79,7 @@ class App:
         # the number of times we try to get enough random to compute the hommography
         self.tries = 5
         self.FRCNN = False
-        self.dif_thresh = 1
+        self.dif_thresh = 1000
 
 
 
@@ -103,7 +105,7 @@ class App:
         return new_tracks
 
 
-    def extract_features(self, frame_gray, vis):
+    def extract_features(self, frame_gray, vis, ft='gftt'):
         mask = np.zeros_like(frame_gray)
         if len(self.detections) != 0:
             for det in self.detections:
@@ -113,7 +115,13 @@ class App:
 
         for x, y in [np.int32(tr[-1]) for tr in self.tracks]:
             cv2.circle(mask, (x, y), 5, 0, -1)
-        return cv2.goodFeaturesToTrack(frame_gray, mask = mask, **feature_params)
+        if ft=='gftt':
+            return cv2.goodFeaturesToTrack(frame_gray, mask = mask, **feature_params)
+        elif ft=='sift':
+            sift = SIFT_create()
+            kp = sift.detect(frame_gray, mask=mask)
+            points = [k.pt for k in kp]
+            return points
 
 
 
@@ -209,17 +217,9 @@ class App:
         if (frame_idx == 2) or (self.FRCNN == True):
         # if (frame_idx % self.detect_box_interval) == 0:
             self.detections = detect_box(frame)
-        # mask = np.zeros_like(frame_gray)
-        # if len(self.detections) != 0:
-        #     for det in self.detections:
-        #         ((x1,y1),(x2,y2)) = det
-        #         cv2.rectangle(vis, (x1, y1), (x2, y2), (0,255,0))
-        #         mask[y1:y2, x1:x2] = 255
 
-        # for x, y in [np.int32(tr[-1]) for tr in self.tracks]:
-        #     cv2.circle(mask, (x, y), 5, 0, -1)
-        # p = cv2.goodFeaturesToTrack(frame_gray, mask = mask, **feature_params)
-        p = self.extract_features(frame_gray, vis)
+        p = self.extract_features(frame_gray, vis, ft='sift')
+        # p = self.extract_features(frame_gray, vis, ft='gftt')
 
         if p is not None:
             for x, y in np.float32(p).reshape(-1, 2):
@@ -241,9 +241,10 @@ class App:
             # Detection phase:
             self.detect(frame_idx, frame, frame_gray, vis)
             self.prev_gray = frame_gray
-            cv2.imshow('lk_track', vis)
-            cv2.waitKey(0)
-            ch = cv2.waitKey(1)
+            cv2.namedWindow('lk_track',cv2.WINDOW_NORMAL)
+            imS = cv2.resize(vis, (1400, 1024))
+            cv2.imshow('lk_track', imS)
+            ch = cv2.waitKey(0)
             # if the key is the esc key then exit
             if ch == 27:
                 break
